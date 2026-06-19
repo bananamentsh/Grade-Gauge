@@ -1,0 +1,96 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import GradeBadge from "../../../../components/GradeBadge";
+import StatsSummary from "../../../../components/StatsSummary";
+import SubmissionCard from "../../../../components/SubmissionCard";
+import { getAssessmentBySlug, getClassBySlug } from "../../../../lib/classes";
+import { getSubmissionsForAssessment } from "../../../../lib/submissions";
+import { getAssessmentStats } from "../../../../lib/stats";
+
+export default async function AssessmentPage({
+  params,
+}: {
+  params: Promise<{ classSlug: string; assessmentSlug: string }>;
+}) {
+  const { classSlug, assessmentSlug } = await params;
+  const classPage = await getClassBySlug(classSlug);
+  const assessment = await getAssessmentBySlug(classSlug, assessmentSlug);
+
+  if (!classPage || !assessment) {
+    notFound();
+  }
+
+  const submissions = await getSubmissionsForAssessment(assessment.id);
+  const stats = getAssessmentStats(submissions, assessment.markedOutOf, assessment.passThreshold);
+  const sortedSubmissions = [...submissions].sort((a, b) => b.score - a.score);
+
+  return (
+    <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+      <nav className="mb-3 text-sm text-gray-500">
+        <Link href="/" className="hover:text-teal-600">
+          Home
+        </Link>
+        <span className="mx-1.5">/</span>
+        <Link href={`/c/${classPage.slug}`} className="hover:text-teal-600">
+          {classPage.code}
+        </Link>
+      </nav>
+
+      <div className="space-y-4">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span className="rounded-full bg-teal-50 px-2 py-0.5 font-medium text-teal-700">
+              {assessment.type}
+            </span>
+            <span>&middot;</span>
+            <span>{assessment.weighting}</span>
+            <span>&middot;</span>
+            <span>Due: {assessment.dueDate}</span>
+          </div>
+          <h1 className="mt-2 text-xl font-semibold text-gray-900">{assessment.title}</h1>
+          <p className="mt-2 text-sm text-gray-600">{assessment.description}</p>
+
+          {assessment.usesLetterGrades && assessment.gradingScale && (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[420px] text-left text-sm">
+                <thead>
+                  <tr className="text-xs uppercase tracking-wide text-gray-400">
+                    <th className="py-1 pr-4 font-medium">Grade</th>
+                    <th className="py-1 pr-4 font-medium">Marks</th>
+                    <th className="py-1 pr-4 font-medium">Description</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {assessment.gradingScale.map((band) => (
+                    <tr key={band.grade}>
+                      <td className="py-1.5 pr-4">
+                        <GradeBadge grade={band.grade} />
+                      </td>
+                      <td className="py-1.5 pr-4 text-gray-600">
+                        {band.min === band.max ? band.min : `${band.min}-${band.max}`}
+                      </td>
+                      <td className="py-1.5 pr-4 text-gray-500">{band.description}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <StatsSummary assessment={assessment} stats={stats} />
+
+        <div>
+          <h2 className="mb-2 text-base font-semibold text-gray-900">
+            Submissions ({submissions.length})
+          </h2>
+          <div className="space-y-2">
+            {sortedSubmissions.map((submission) => (
+              <SubmissionCard key={submission.id} submission={submission} assessment={assessment} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}

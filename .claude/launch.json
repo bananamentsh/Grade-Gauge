@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "grade-gauge-dev",
+      "runtimeExecutable": "/Users/pellow.benjamin/.nvm/versions/node/v26.3.0/bin/node",
+      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev"],
+      "cwd": "grade-gauge",
+      "port": 3000,
+      "autoPort": true,
+      "env": {
+        "PATH": "/Users/pellow.benjamin/.nvm/versions/node/v26.3.0/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+        "HOME": "/Users/pellow.benjamin",
+        "SHELL": "/bin/zsh",
+        "TMPDIR": "/var/folders/zy/nn675fdn2b573vhjmx1s75rr0000gn/T/"
+      }
+    }
+  ]
+}

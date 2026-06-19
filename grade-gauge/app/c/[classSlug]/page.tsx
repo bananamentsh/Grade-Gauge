@@ -1,0 +1,91 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import AssessmentCard from "../../components/AssessmentCard";
+import { accentBgClass } from "../../lib/accent";
+import { getAssessmentsForClass, getClassBySlug } from "../../lib/classes";
+import { getSubmissionsForAssessment } from "../../lib/submissions";
+
+export default async function ClassPage({
+  params,
+}: {
+  params: Promise<{ classSlug: string }>;
+}) {
+  const { classSlug } = await params;
+  const classPage = await getClassBySlug(classSlug);
+
+  if (!classPage) {
+    notFound();
+  }
+
+  const assessments = await getAssessmentsForClass(classSlug);
+  const submissionsByAssessment = await Promise.all(
+    assessments.map((assessment) => getSubmissionsForAssessment(assessment.id))
+  );
+
+  return (
+    <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+      <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <div className={`h-16 ${accentBgClass(classPage.accent)}`} />
+        <div className="flex flex-wrap items-center gap-4 p-4">
+          <span
+            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-4 border-white text-base font-bold text-white -mt-10 ${accentBgClass(
+              classPage.accent
+            )}`}
+          >
+            {classPage.subject.slice(0, 2).toUpperCase()}
+          </span>
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900">{classPage.name}</h1>
+            <p className="text-sm text-gray-500">
+              {classPage.memberCount} members &middot; {classPage.subject}
+            </p>
+          </div>
+          <Link
+            href="/"
+            className="ml-auto rounded-full border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Back to classes
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Assessments</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Pick an assessment to see submissions, marks and class-wide statistics.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {assessments.map((assessment, index) => (
+              <AssessmentCard
+                key={assessment.id}
+                assessment={assessment}
+                submissions={submissionsByAssessment[index] ?? []}
+              />
+            ))}
+          </div>
+        </section>
+
+        <aside className="space-y-4">
+          <div className="rounded-lg border border-gray-200 bg-white p-4">
+            <h2 className="text-sm font-semibold text-gray-900">About {classPage.code}</h2>
+            <p className="mt-2 text-sm text-gray-500">{classPage.description}</p>
+            <dl className="mt-3 space-y-1 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-gray-400">Members</dt>
+                <dd className="font-medium text-gray-700">{classPage.memberCount}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-400">Assessments</dt>
+                <dd className="font-medium text-gray-700">{assessments.length}</dd>
+              </div>
+            </dl>
+          </div>
+        </aside>
+      </div>
+    </main>
+  );
+}

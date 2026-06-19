@@ -1,0 +1,68 @@
+import { Assessment, Submission } from "../lib/types";
+import GradeBadge from "./GradeBadge";
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return parts.map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleString("en-AU", {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+export default function SubmissionCard({
+  submission,
+  assessment,
+}: {
+  submission: Submission;
+  assessment: Assessment;
+}) {
+  const displayName = submission.anonymous ? "Anonymous" : submission.studentName;
+
+  return (
+    <div className="flex gap-3 rounded-lg border border-gray-200 bg-white p-4">
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+          submission.anonymous ? "bg-gray-200 text-gray-500" : "bg-teal-100 text-teal-700"
+        }`}
+      >
+        {submission.anonymous ? "?" : initials(displayName)}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+          <span className="font-semibold text-gray-900">{displayName}</span>
+          <span className="text-gray-400">&middot;</span>
+          <span className="text-gray-500">Marked by {submission.marker}</span>
+          <span className="text-gray-400">&middot;</span>
+          <span className="text-gray-400">{formatDate(submission.submittedAt)}</span>
+        </div>
+
+        {submission.responseExcerpt && (
+          <blockquote className="mt-2 border-l-2 border-gray-200 pl-3 text-sm text-gray-600">
+            {submission.responseExcerpt}
+          </blockquote>
+        )}
+
+        {submission.feedback && (
+          <p className="mt-2 text-sm text-gray-500">
+            <span className="font-medium text-gray-600">Feedback: </span>
+            {submission.feedback}
+          </p>
+        )}
+      </div>
+
+      <div className="flex shrink-0 flex-col items-end gap-1.5">
+        <span className="rounded-md bg-gray-100 px-2 py-1 text-sm font-semibold text-gray-700">
+          {submission.score}/{assessment.markedOutOf}
+        </span>
+        {submission.grade && <GradeBadge grade={submission.grade} />}
+      </div>
+    </div>
+  );
+}
