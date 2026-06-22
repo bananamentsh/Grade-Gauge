@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient";
+import { createClient } from "./supabase/server";
 import { Grade, Submission } from "./types";
 
 interface SubmissionRow {
@@ -29,6 +29,7 @@ function mapSubmission(row: SubmissionRow): Submission {
 }
 
 export async function getSubmissionsForAssessment(assessmentId: string): Promise<Submission[]> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("submissions")
     .select("*")

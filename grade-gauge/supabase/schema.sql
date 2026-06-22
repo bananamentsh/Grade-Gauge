@@ -52,3 +52,36 @@ CREATE TABLE IF NOT EXISTS submissions (
 -- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_assessments_class_id  ON assessments(class_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_assessment ON submissions(assessment_id);
+
+-- ============================================================
+-- Profiles (one row per auth user)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS profiles (
+  id            UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  username      TEXT UNIQUE,
+  display_name  TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Memberships (who's in which class, and are they an admin)
+CREATE TABLE IF NOT EXISTS memberships (
+  user_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  class_id   TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+  is_admin   BOOLEAN DEFAULT FALSE,
+  joined_at  TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (user_id, class_id)
+);
+
+-- Auto-create a profile row whenever someone signs up
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id) VALUES (NEW.id);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();

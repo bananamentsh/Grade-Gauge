@@ -1,6 +1,13 @@
 import Link from "next/link";
+import { createClient } from "../lib/supabase/server";
+import { logout } from "../lib/actions/auth";
 
-export default function Navbar() {
+export default async function Navbar() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  const email = data.user?.email;
+  const initials = email ? email.slice(0, 2).toUpperCase() : "";
+
   return (
     <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-2.5 sm:px-6">
@@ -31,12 +38,29 @@ export default function Navbar() {
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          <span className="hidden text-sm font-medium text-gray-600 sm:inline">
-            Jordan P.
-          </span>
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-100 text-sm font-semibold text-teal-700">
-            JP
-          </span>
+          {email ? (
+            <>
+              <span className="hidden text-sm font-medium text-gray-600 sm:inline">{email}</span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-100 text-sm font-semibold text-teal-700">
+                {initials}
+              </span>
+              <form action={logout}>
+                <button
+                  type="submit"
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                >
+                  Log out
+                </button>
+              </form>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-md bg-teal-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-700"
+            >
+              Log in
+            </Link>
+          )}
         </div>
       </div>
     </header>

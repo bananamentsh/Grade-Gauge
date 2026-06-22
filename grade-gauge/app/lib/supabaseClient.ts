@@ -1,12 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables."
-  );
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Deprecated: replaced by app/lib/supabase/server.ts (Server Components/Actions)
+// and app/lib/supabase/client.ts (Client Components). Kept as an empty module
+// so no stray import accidentally resolves to a stale anon-only client.
+export {};

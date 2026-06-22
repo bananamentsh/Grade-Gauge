@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient";
+import { createClient } from "./supabase/server";
 import { Assessment, ClassPage, GradeBand } from "./types";
 
 interface ClassRow {
@@ -62,6 +62,7 @@ function mapAssessment(row: AssessmentRow, classSlug: string): Assessment {
 }
 
 export async function getClasses(): Promise<ClassPage[]> {
+  const supabase = await createClient();
   const { data, error } = await supabase.from("classes").select("*").order("name");
 
   if (error) {
@@ -72,6 +73,7 @@ export async function getClasses(): Promise<ClassPage[]> {
 }
 
 export async function getClassBySlug(slug: string): Promise<ClassPage | undefined> {
+  const supabase = await createClient();
   const { data, error } = await supabase.from("classes").select("*").eq("slug", slug).maybeSingle();
 
   if (error) {
@@ -87,6 +89,7 @@ export async function getAssessmentsForClass(classSlug: string): Promise<Assessm
     return [];
   }
 
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("assessments")
     .select("*")
@@ -109,6 +112,7 @@ export async function getAssessmentBySlug(
     return undefined;
   }
 
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("assessments")
     .select("*")
