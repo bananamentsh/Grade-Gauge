@@ -11,12 +11,14 @@ export default function CreateSubmissionForm({
   assessmentId,
   assessmentSlug,
   markedOutOf,
+  knownMarkers = [],
 }: {
   classId: string;
   classSlug: string;
   assessmentId: string;
   assessmentSlug: string;
   markedOutOf: number;
+  knownMarkers?: string[];
 }) {
   const [state, formAction, pending] = useActionState(createSubmission, initialState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -59,9 +61,15 @@ export default function CreateSubmissionForm({
             id="marker"
             name="marker"
             required
+            list="known-markers"
             placeholder="e.g. Ms Smith"
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
           />
+          <datalist id="known-markers">
+            {knownMarkers.map((marker) => (
+              <option key={marker} value={marker} />
+            ))}
+          </datalist>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import { Submission } from "./types";
+import { GradeBand, Submission } from "./types";
 
 export function mean(values: number[]): number {
   if (values.length === 0) return 0;
@@ -53,6 +53,7 @@ export interface DistributionBand {
 /**
  * Bands are 10-percentage-point increments starting from the pass threshold,
  * with everything below the threshold collapsed into a single band.
+ * Returned highest-scoring band first.
  */
 export function getScoreDistribution(
   submissions: Submission[],
@@ -88,7 +89,38 @@ export function getScoreDistribution(
     }
   }
 
+  return bands.slice().reverse();
+}
+
+/**
+ * One band per grade in the assessment's grading scale, highest grade
+ * first (sorted by descending min mark). Used instead of getScoreDistribution
+ * whenever the assessment uses letter grades.
+ */
+export function getGradeDistribution(submissions: Submission[], gradingScale: GradeBand[]): DistributionBand[] {
+  const sortedScale = [...gradingScale].sort((a, b) => b.min - a.min);
+
+  const bands: DistributionBand[] = sortedScale.map((band) => ({
+    label: `${band.grade} (${band.min === band.max ? band.min : `${band.min}-${band.max}`})`,
+    minPct: band.min,
+    maxPct: band.max,
+    count: 0,
+  }));
+
+  for (const submission of submissions) {
+    const grade = submission.grade ?? deriveGradeFromScale(submission.score, sortedScale);
+    const band = bands.find((b, i) => sortedScale[i].grade === grade);
+    if (band) {
+      band.count += 1;
+    }
+  }
+
   return bands;
+}
+
+function deriveGradeFromScale(score: number, scale: GradeBand[]): string | null {
+  const band = scale.find((b) => score >= b.min && score <= b.max);
+  return band?.grade ?? null;
 }
 
 function formatPct(value: number): string {
@@ -140,7 +172,8 @@ export interface AssessmentStats {
 export function getAssessmentStats(
   submissions: Submission[],
   markedOutOf: number,
-  passThreshold: number
+  passThreshold: number,
+  gradingScale?: GradeBand[]
 ): AssessmentStats {
   const scores = submissions.map((s) => s.score);
   const { q1, q3, iqr } = interquartileRange(scores);
@@ -154,7 +187,10 @@ export function getAssessmentStats(
     q3,
     iqr,
     passRate: passRate(scores, passThreshold),
-    distribution: getScoreDistribution(submissions, markedOutOf, passThreshold),
+    distribution:
+      gradingScale && gradingScale.length > 0
+        ? getGradeDistribution(submissions, gradingScale)
+        : getScoreDistribution(submissions, markedOutOf, passThreshold),
     markerBreakdown: getMarkerBreakdown(submissions),
   };
 }

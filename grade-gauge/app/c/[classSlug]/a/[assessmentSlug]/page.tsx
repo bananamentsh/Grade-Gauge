@@ -26,8 +26,14 @@ export default async function AssessmentPage({
     getSubmissionsForAssessment(assessment.id),
     getMembershipRole(classPage.id),
   ]);
-  const stats = getAssessmentStats(submissions, assessment.markedOutOf, assessment.passThreshold);
+  const stats = getAssessmentStats(
+    submissions,
+    assessment.markedOutOf,
+    assessment.passThreshold,
+    assessment.usesLetterGrades ? assessment.gradingScale : undefined
+  );
   const sortedSubmissions = [...submissions].sort((a, b) => b.score - a.score);
+  const knownMarkers = Array.from(new Set(submissions.map((s) => s.marker))).sort();
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
@@ -103,6 +109,7 @@ export default async function AssessmentPage({
             assessmentId={assessment.id}
             assessmentSlug={assessment.slug}
             markedOutOf={assessment.markedOutOf}
+            knownMarkers={knownMarkers}
           />
         )}
 
