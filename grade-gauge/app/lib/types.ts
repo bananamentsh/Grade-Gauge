@@ -22,6 +22,7 @@ export interface ClassPage {
 export interface Assessment {
   id: string;
   slug: string;
+  classId: string;
   classSlug: string;
   title: string;
   type: string;
@@ -33,6 +34,8 @@ export interface Assessment {
   usesLetterGrades: boolean;
   gradingScale?: GradeBand[];
   description: string;
+  attachmentUrl?: string | null;
+  attachmentName?: string | null;
   createdAt: string;
 }
 
@@ -45,5 +48,7 @@ export interface Submission {
   grade: Grade | null;
   feedback?: string | null;
   responseExcerpt?: string | null;
+  fileUrl?: string | null;
+  fileName?: string | null;
   submittedAt: string;
 }

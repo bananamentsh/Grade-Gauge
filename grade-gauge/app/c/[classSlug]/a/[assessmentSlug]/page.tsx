@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import CreateSubmissionForm from "../../../../components/CreateSubmissionForm";
 import GradeBadge from "../../../../components/GradeBadge";
 import StatsSummary from "../../../../components/StatsSummary";
 import SubmissionCard from "../../../../components/SubmissionCard";
 import { getAssessmentBySlug, getClassBySlug } from "../../../../lib/classes";
+import { getMembershipRole } from "../../../../lib/profile";
 import { getSubmissionsForAssessment } from "../../../../lib/submissions";
 import { getAssessmentStats } from "../../../../lib/stats";
 
@@ -20,7 +22,10 @@ export default async function AssessmentPage({
     notFound();
   }
 
-  const submissions = await getSubmissionsForAssessment(assessment.id);
+  const [submissions, { isMember }] = await Promise.all([
+    getSubmissionsForAssessment(assessment.id),
+    getMembershipRole(classPage.id),
+  ]);
   const stats = getAssessmentStats(submissions, assessment.markedOutOf, assessment.passThreshold);
   const sortedSubmissions = [...submissions].sort((a, b) => b.score - a.score);
 
@@ -49,6 +54,17 @@ export default async function AssessmentPage({
           </div>
           <h1 className="mt-2 text-xl font-semibold text-gray-900">{assessment.title}</h1>
           <p className="mt-2 text-sm text-gray-600">{assessment.description}</p>
+
+          {assessment.attachmentUrl && (
+            <a
+              href={assessment.attachmentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-50"
+            >
+              View attachment{assessment.attachmentName ? `: ${assessment.attachmentName}` : ""}
+            </a>
+          )}
 
           {assessment.usesLetterGrades && assessment.gradingScale && (
             <div className="mt-4 overflow-x-auto">
@@ -79,6 +95,16 @@ export default async function AssessmentPage({
         </div>
 
         <StatsSummary assessment={assessment} stats={stats} />
+
+        {isMember && (
+          <CreateSubmissionForm
+            classId={classPage.id}
+            classSlug={classPage.slug}
+            assessmentId={assessment.id}
+            assessmentSlug={assessment.slug}
+            markedOutOf={assessment.markedOutOf}
+          />
+        )}
 
         <div>
           <h2 className="mb-2 text-base font-semibold text-gray-900">

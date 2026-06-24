@@ -1,5 +1,8 @@
+import { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "./supabase/server";
 import { Assessment, ClassPage, GradeBand } from "./types";
+
+const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hour
 
 interface ClassRow {
   id: string;
@@ -27,6 +30,8 @@ interface AssessmentRow {
   uses_letter_grades: boolean;
   grading_scale: GradeBand[] | null;
   description: string | null;
+  attachment_path: string | null;
+  attachment_name: string | null;
   created_at: string;
 }
 
@@ -44,10 +49,23 @@ function mapClass(row: ClassRow): ClassPage {
   };
 }
 
-function mapAssessment(row: AssessmentRow, classSlug: string): Assessment {
+async function mapAssessment(
+  supabase: SupabaseClient,
+  row: AssessmentRow,
+  classSlug: string
+): Promise<Assessment> {
+  let attachmentUrl: string | null = null;
+  if (row.attachment_path) {
+    const { data } = await supabase.storage
+      .from("attachments")
+      .createSignedUrl(row.attachment_path, SIGNED_URL_TTL_SECONDS);
+    attachmentUrl = data?.signedUrl ?? null;
+  }
+
   return {
     id: row.id,
     slug: row.slug,
+    classId: row.class_id,
     classSlug,
     title: row.title,
     type: row.type,
@@ -59,6 +77,8 @@ function mapAssessment(row: AssessmentRow, classSlug: string): Assessment {
     usesLetterGrades: row.uses_letter_grades,
     gradingScale: row.grading_scale ?? undefined,
     description: row.description ?? "",
+    attachmentUrl,
+    attachmentName: row.attachment_name ?? null,
     createdAt: row.created_at,
   };
 }
@@ -102,7 +122,7 @@ export async function getAssessmentsForClass(classSlug: string): Promise<Assessm
     throw new Error(`Failed to load assessments for "${classSlug}": ${error.message}`);
   }
 
-  return (data as AssessmentRow[]).map((row) => mapAssessment(row, classSlug));
+  return Promise.all((data as AssessmentRow[]).map((row) => mapAssessment(supabase, row, classSlug)));
 }
 
 export async function getAssessmentBySlug(
@@ -126,7 +146,7 @@ export async function getAssessmentBySlug(
     throw new Error(`Failed to load assessment "${assessmentSlug}": ${error.message}`);
   }
 
-  return data ? mapAssessment(data as AssessmentRow, classSlug) : undefined;
+  return data ? mapAssessment(supabase, data as AssessmentRow, classSlug) : undefined;
 }
 
 export async function getAssessmentIdBySlug(

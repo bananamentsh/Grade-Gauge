@@ -32,6 +32,12 @@ CREATE TABLE IF NOT EXISTS assessments (
   uses_letter_grades  BOOLEAN NOT NULL DEFAULT FALSE,
   grading_scale       JSONB,
   description         TEXT,
+  -- Storage path (in the private "attachments" bucket) for the
+  -- question/notification file the admin attaches, e.g.
+  -- "{class_id}/assessments/{uuid}-{filename}". Signed URLs are
+  -- generated on read, never stored.
+  attachment_path     TEXT,
+  attachment_name     TEXT,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (class_id, slug)
 );
@@ -47,12 +53,20 @@ CREATE TABLE IF NOT EXISTS submissions (
   grade             TEXT CHECK (grade IN ('A', 'B', 'C', 'D', 'E', '0')),
   feedback          TEXT,
   response_excerpt  TEXT,
+  -- Author of the submission. Nullable so rows survive account
+  -- deletion; used for future edit/delete-own-post RLS.
+  user_id           UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  -- Storage path in the private "attachments" bucket, e.g.
+  -- "{class_id}/submissions/{uuid}-{filename}".
+  file_path         TEXT,
+  file_name         TEXT,
   submitted_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_assessments_class_id  ON assessments(class_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_assessment ON submissions(assessment_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_user_id ON submissions(user_id);
 
 -- ============================================================
 -- Profiles (one row per auth user)

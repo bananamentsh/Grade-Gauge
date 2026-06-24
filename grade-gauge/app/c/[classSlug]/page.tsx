@@ -59,11 +59,21 @@ export default async function ClassPage({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
         <section className="space-y-4">
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">Assessments</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Pick an assessment to see submissions, marks and class-wide statistics.
-            </p>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">Assessments</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Pick an assessment to see submissions, marks and class-wide statistics.
+              </p>
+            </div>
+            {isAdmin && (
+              <Link
+                href={`/c/${classSlug}/assessments/new`}
+                className="rounded-md bg-teal-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-700"
+              >
+                Add assessment
+              </Link>
+            )}
           </div>
 
           <div className="space-y-3">

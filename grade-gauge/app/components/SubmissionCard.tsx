@@ -55,6 +55,17 @@ export default function SubmissionCard({
             {submission.feedback}
           </p>
         )}
+
+        {submission.fileUrl && (
+          <a
+            href={submission.fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:underline"
+          >
+            View file{submission.fileName ? `: ${submission.fileName}` : ""}
+          </a>
+        )}
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-1.5">

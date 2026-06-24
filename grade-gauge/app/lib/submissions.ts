@@ -1,5 +1,8 @@
+import { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "./supabase/server";
 import { Grade, Submission } from "./types";
+
+const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hour
 
 interface SubmissionRow {
   id: string;
@@ -11,10 +14,20 @@ interface SubmissionRow {
   grade: Grade | null;
   feedback: string | null;
   response_excerpt: string | null;
+  file_path: string | null;
+  file_name: string | null;
   submitted_at: string;
 }
 
-function mapSubmission(row: SubmissionRow): Submission {
+async function mapSubmission(supabase: SupabaseClient, row: SubmissionRow): Promise<Submission> {
+  let fileUrl: string | null = null;
+  if (row.file_path) {
+    const { data } = await supabase.storage
+      .from("attachments")
+      .createSignedUrl(row.file_path, SIGNED_URL_TTL_SECONDS);
+    fileUrl = data?.signedUrl ?? null;
+  }
+
   return {
     id: row.id,
     studentName: row.student_name,
@@ -24,6 +37,8 @@ function mapSubmission(row: SubmissionRow): Submission {
     grade: row.grade,
     feedback: row.feedback,
     responseExcerpt: row.response_excerpt,
+    fileUrl,
+    fileName: row.file_name,
     submittedAt: row.submitted_at,
   };
 }
@@ -40,5 +55,5 @@ export async function getSubmissionsForAssessment(assessmentId: string): Promise
     throw new Error(`Failed to load submissions for assessment "${assessmentId}": ${error.message}`);
   }
 
-  return (data as SubmissionRow[]).map(mapSubmission);
+  return Promise.all((data as SubmissionRow[]).map((row) => mapSubmission(supabase, row)));
 }

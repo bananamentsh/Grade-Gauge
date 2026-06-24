@@ -54,6 +54,16 @@ CREATE POLICY "memberships_delete" ON memberships FOR DELETE TO authenticated
 -- DEFINER, bypasses RLS). Two separate inserts left a window where the
 -- class existed with no admin yet, which the memberships_insert_admin
 -- policy correctly rejected.
+--
+-- IMPORTANT: an old leftover policy "Allow public read access" (qual:
+-- true, role: public) used to exist on classes/assessments/submissions
+-- from before membership-based RLS was added. Because RLS policies are
+-- PERMISSIVE by default (OR'd together), that one "true" policy alone
+-- let every signed-in (and even unauthenticated) user read every class,
+-- bypassing classes_select_members entirely — this is what let a brand
+-- new account see classes it was never invited to. Dropped via the
+-- drop_leftover_public_read_policies migration. Do not reintroduce a
+-- blanket "true" SELECT policy on these tables.
 CREATE POLICY "classes_select_members" ON classes FOR SELECT TO authenticated
   USING (is_member_of_class(id));
 CREATE POLICY "classes_update_admin" ON classes FOR UPDATE TO authenticated
@@ -202,3 +212,29 @@ REVOKE EXECUTE ON FUNCTION get_class_preview_by_invite_code(text) FROM PUBLIC, a
 GRANT EXECUTE ON FUNCTION approve_join_request(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION deny_join_request(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION get_class_preview_by_invite_code(text) TO authenticated;
+
+-- ============================================================
+-- Storage: question/notification and submission file attachments
+-- (Phase 5/6). Private bucket — files are never publicly readable;
+-- the app generates short-lived signed URLs on read. Path convention
+-- is "{class_id}/assessments/{uuid}-{name}" or
+-- "{class_id}/submissions/{uuid}-{name}", so the first path segment
+-- is always a class_id and we can reuse the existing membership
+-- helpers to gate access.
+-- ============================================================
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('attachments', 'attachments', false)
+ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "attachments_select_members" ON storage.objects FOR SELECT TO authenticated
+  USING (bucket_id = 'attachments' AND is_member_of_class((storage.foldername(name))[1]));
+
+CREATE POLICY "attachments_insert_members" ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'attachments' AND is_member_of_class((storage.foldername(name))[1]));
+
+CREATE POLICY "attachments_delete_own_or_admin" ON storage.objects FOR DELETE TO authenticated
+  USING (
+    bucket_id = 'attachments' AND (
+      owner = auth.uid() OR is_admin_of_class((storage.foldername(name))[1])
+    )
+  );
