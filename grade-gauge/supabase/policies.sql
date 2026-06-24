@@ -47,15 +47,40 @@ CREATE POLICY "memberships_update_admin" ON memberships FOR UPDATE TO authentica
 CREATE POLICY "memberships_delete" ON memberships FOR DELETE TO authenticated
   USING (user_id = auth.uid() OR is_admin_of_class(class_id));
 
--- classes: visible only to members. Any signed-in user can create one
--- (and should insert a matching admin membership row right after).
--- Only class admins can update.
+-- classes: visible only to members. Only class admins can update.
+-- NOTE: there is deliberately no INSERT policy here. Creating a class
+-- always goes through create_class() (below), which inserts the class
+-- row AND the creator's admin membership row atomically (SECURITY
+-- DEFINER, bypasses RLS). Two separate inserts left a window where the
+-- class existed with no admin yet, which the memberships_insert_admin
+-- policy correctly rejected.
 CREATE POLICY "classes_select_members" ON classes FOR SELECT TO authenticated
   USING (is_member_of_class(id));
-CREATE POLICY "classes_insert_any_authenticated" ON classes FOR INSERT TO authenticated
-  WITH CHECK (true);
 CREATE POLICY "classes_update_admin" ON classes FOR UPDATE TO authenticated
   USING (is_admin_of_class(id));
+
+CREATE OR REPLACE FUNCTION create_class(
+  p_id text,
+  p_slug text,
+  p_name text,
+  p_subject text,
+  p_code text,
+  p_description text,
+  p_accent text,
+  p_invite_code text
+) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  INSERT INTO classes (id, slug, name, subject, code, description, accent, invite_code, member_count)
+  VALUES (p_id, p_slug, p_name, p_subject, p_code, p_description, p_accent, p_invite_code, 1);
+
+  INSERT INTO memberships (user_id, class_id, is_admin)
+  VALUES (auth.uid(), p_id, true);
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION create_class(text, text, text, text, text, text, text, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION create_class(text, text, text, text, text, text, text, text) TO authenticated;
 
 -- assessments: visible to class members, managed by class admins only.
 CREATE POLICY "assessments_select_members" ON assessments FOR SELECT TO authenticated

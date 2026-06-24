@@ -47,30 +47,23 @@ export async function createClass(
   const slug = `${baseSlug}-${classId.slice(0, 6)}`;
   const accent = ACCENTS[Math.floor(Math.random() * ACCENTS.length)];
 
-  const { error: classError } = await supabase.from("classes").insert({
-    id: classId,
-    slug,
-    name,
-    subject,
-    code,
-    description,
-    accent,
-    member_count: 1,
-    invite_code: inviteCode(),
+  // Single atomic call: creates the class row AND the admin membership
+  // row together (see create_class() in policies.sql). Doing this as
+  // two separate inserts left a window where the class existed but the
+  // creator wasn't an admin yet, which RLS correctly rejected.
+  const { error } = await supabase.rpc("create_class", {
+    p_id: classId,
+    p_slug: slug,
+    p_name: name,
+    p_subject: subject,
+    p_code: code,
+    p_description: description,
+    p_accent: accent,
+    p_invite_code: inviteCode(),
   });
 
-  if (classError) {
-    return { error: `Failed to create class: ${classError.message}` };
-  }
-
-  const { error: membershipError } = await supabase.from("memberships").insert({
-    user_id: userData.user.id,
-    class_id: classId,
-    is_admin: true,
-  });
-
-  if (membershipError) {
-    return { error: `Class created, but failed to add you as admin: ${membershipError.message}` };
+  if (error) {
+    return { error: `Failed to create class: ${error.message}` };
   }
 
   redirect(`/c/${slug}`);
