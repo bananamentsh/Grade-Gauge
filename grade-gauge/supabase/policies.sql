@@ -33,11 +33,15 @@ CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE TO authenticated USIN
 CREATE POLICY "profiles_insert_own" ON profiles FOR INSERT TO authenticated WITH CHECK (id = auth.uid());
 
 -- memberships: see your own rows, or any row in a class you belong to.
--- join yourself, or get added by a class admin. Admins manage/remove members.
+-- NOTE: membership rows are only ever created by a class admin directly,
+-- or by approve_join_request() (SECURITY DEFINER, bypasses this policy on
+-- purpose). There is deliberately no self-insert clause — that previously
+-- let any authenticated user join any class by guessing its id, bypassing
+-- the invite/approval flow entirely. See join_requests below.
 CREATE POLICY "memberships_select" ON memberships FOR SELECT TO authenticated
   USING (user_id = auth.uid() OR is_member_of_class(class_id));
-CREATE POLICY "memberships_insert" ON memberships FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid() OR is_admin_of_class(class_id));
+CREATE POLICY "memberships_insert_admin" ON memberships FOR INSERT TO authenticated
+  WITH CHECK (is_admin_of_class(class_id));
 CREATE POLICY "memberships_update_admin" ON memberships FOR UPDATE TO authenticated
   USING (is_admin_of_class(class_id));
 CREATE POLICY "memberships_delete" ON memberships FOR DELETE TO authenticated
@@ -94,3 +98,82 @@ REVOKE EXECUTE ON FUNCTION public.is_member_of_assessment_class(text) FROM PUBLI
 GRANT EXECUTE ON FUNCTION public.is_member_of_class(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_admin_of_class(text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_member_of_assessment_class(text) TO authenticated;
+
+-- ============================================================
+-- Invites / join requests (Phase 4)
+-- classes.invite_code is a shareable per-class link. Following it does
+-- NOT grant access — it creates a pending join_requests row that the
+-- class admin must approve. Approval is done via approve_join_request(),
+-- which is the only path (besides a direct admin insert) that can ever
+-- write to memberships, since memberships_insert_admin above blocks
+-- everyone else.
+-- ============================================================
+CREATE POLICY "join_requests_select_own_or_admin" ON join_requests FOR SELECT TO authenticated
+  USING (user_id = auth.uid() OR is_admin_of_class(class_id));
+CREATE POLICY "join_requests_insert_own" ON join_requests FOR INSERT TO authenticated
+  WITH CHECK (user_id = auth.uid());
+CREATE POLICY "join_requests_update_admin" ON join_requests FOR UPDATE TO authenticated
+  USING (is_admin_of_class(class_id));
+CREATE POLICY "join_requests_delete_own_or_admin" ON join_requests FOR DELETE TO authenticated
+  USING (user_id = auth.uid() OR is_admin_of_class(class_id));
+
+CREATE OR REPLACE FUNCTION approve_join_request(p_request_id text) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_class_id text;
+  v_user_id uuid;
+BEGIN
+  SELECT class_id, user_id INTO v_class_id, v_user_id
+  FROM join_requests WHERE id = p_request_id AND status = 'pending';
+
+  IF v_class_id IS NULL THEN
+    RAISE EXCEPTION 'Join request not found or already decided';
+  END IF;
+
+  IF NOT is_admin_of_class(v_class_id) THEN
+    RAISE EXCEPTION 'Not authorized to approve requests for this class';
+  END IF;
+
+  INSERT INTO memberships (user_id, class_id, is_admin)
+  VALUES (v_user_id, v_class_id, false)
+  ON CONFLICT (user_id, class_id) DO NOTHING;
+
+  UPDATE join_requests SET status = 'approved', decided_at = NOW(), decided_by = auth.uid()
+  WHERE id = p_request_id;
+
+  UPDATE classes SET member_count = member_count + 1 WHERE id = v_class_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION deny_join_request(p_request_id text) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_class_id text;
+BEGIN
+  SELECT class_id INTO v_class_id FROM join_requests WHERE id = p_request_id AND status = 'pending';
+
+  IF v_class_id IS NULL THEN
+    RAISE EXCEPTION 'Join request not found or already decided';
+  END IF;
+
+  IF NOT is_admin_of_class(v_class_id) THEN
+    RAISE EXCEPTION 'Not authorized to deny requests for this class';
+  END IF;
+
+  UPDATE join_requests SET status = 'denied', decided_at = NOW(), decided_by = auth.uid()
+  WHERE id = p_request_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION get_class_preview_by_invite_code(p_code text)
+RETURNS TABLE(id text, slug text, name text, subject text)
+LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public AS $$
+  SELECT id, slug, name, subject FROM classes WHERE invite_code = p_code;
+$$;
+
+REVOKE EXECUTE ON FUNCTION approve_join_request(text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION deny_join_request(text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION get_class_preview_by_invite_code(text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION approve_join_request(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION deny_join_request(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_class_preview_by_invite_code(text) TO authenticated;

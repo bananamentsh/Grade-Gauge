@@ -16,6 +16,7 @@ export interface ClassPage {
   memberCount: number;
   description: string;
   accent: string;
+  inviteCode: string;
 }
 
 export interface Assessment {

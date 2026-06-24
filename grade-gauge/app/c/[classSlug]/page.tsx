@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AssessmentCard from "../../components/AssessmentCard";
+import InviteLinkBox from "../../components/InviteLinkBox";
+import PendingRequestsList from "../../components/PendingRequestsList";
 import { accentBgClass } from "../../lib/accent";
+import { getPendingJoinRequests } from "../../lib/actions/joinRequests";
 import { getAssessmentsForClass, getClassBySlug } from "../../lib/classes";
+import { getMembershipRole } from "../../lib/profile";
 import { getSubmissionsForAssessment } from "../../lib/submissions";
 
 export default async function ClassPage({
@@ -17,10 +21,14 @@ export default async function ClassPage({
     notFound();
   }
 
-  const assessments = await getAssessmentsForClass(classSlug);
+  const [assessments, { isAdmin }] = await Promise.all([
+    getAssessmentsForClass(classSlug),
+    getMembershipRole(classPage.id),
+  ]);
   const submissionsByAssessment = await Promise.all(
     assessments.map((assessment) => getSubmissionsForAssessment(assessment.id))
   );
+  const pendingRequests = isAdmin ? await getPendingJoinRequests(classPage.id) : [];
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
@@ -84,6 +92,38 @@ export default async function ClassPage({
               </div>
             </dl>
           </div>
+
+          {isAdmin && (
+            <>
+              <div className="rounded-lg border border-gray-200 bg-white p-4">
+                <h2 className="text-sm font-semibold text-gray-900">Invite link</h2>
+                <p className="mt-1 text-xs text-gray-500">
+                  Anyone with this link can request to join. You approve each request.
+                </p>
+                <div className="mt-2">
+                  <InviteLinkBox
+                    classId={classPage.id}
+                    classSlug={classPage.slug}
+                    inviteCode={classPage.inviteCode}
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-gray-200 bg-white p-4">
+                <h2 className="text-sm font-semibold text-gray-900">
+                  Pending requests
+                  {pendingRequests.length > 0 && (
+                    <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">
+                      {pendingRequests.length}
+                    </span>
+                  )}
+                </h2>
+                <div className="mt-2">
+                  <PendingRequestsList requests={pendingRequests} classSlug={classPage.slug} />
+                </div>
+              </div>
+            </>
+          )}
         </aside>
       </div>
     </main>

@@ -10,6 +10,7 @@ interface ClassRow {
   member_count: number;
   description: string | null;
   accent: string;
+  invite_code: string;
 }
 
 interface AssessmentRow {
@@ -39,6 +40,7 @@ function mapClass(row: ClassRow): ClassPage {
     memberCount: row.member_count,
     description: row.description ?? "",
     accent: row.accent,
+    inviteCode: row.invite_code,
   };
 }
 

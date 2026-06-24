@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS classes (
   member_count  INTEGER NOT NULL DEFAULT 0,
   description   TEXT,
   accent        TEXT NOT NULL DEFAULT 'blue',
+  invite_code   TEXT NOT NULL UNIQUE DEFAULT substr(md5(random()::text || clock_timestamp()::text), 1, 10),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -60,6 +61,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   id            UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   username      TEXT UNIQUE,
   display_name  TEXT,
+  email         TEXT,
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -72,11 +74,28 @@ CREATE TABLE IF NOT EXISTS memberships (
   PRIMARY KEY (user_id, class_id)
 );
 
+-- Pending requests to join a class, created when someone follows an
+-- invite link. A class admin must approve before membership is granted
+-- (see approve_join_request() / deny_join_request() in policies.sql).
+CREATE TABLE IF NOT EXISTS join_requests (
+  id          TEXT PRIMARY KEY,
+  class_id    TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+  user_id     UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  status      TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'denied')),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  decided_at  TIMESTAMPTZ,
+  decided_by  UUID REFERENCES profiles(id),
+  UNIQUE (class_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_join_requests_class_id ON join_requests(class_id);
+ALTER TABLE join_requests ENABLE ROW LEVEL SECURITY;
+
 -- Auto-create a profile row whenever someone signs up
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id) VALUES (NEW.id);
+  INSERT INTO public.profiles (id, email) VALUES (NEW.id, NEW.email);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
