@@ -113,7 +113,7 @@ export async function getPendingJoinRequests(classId: string): Promise<PendingJo
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("join_requests")
-    .select("id, created_at, user_id, profiles(username, display_name, email)")
+    .select("id, created_at, user_id, profiles!join_requests_user_id_fkey(username, display_name, email)")
     .eq("class_id", classId)
     .eq("status", "pending")
     .order("created_at");
