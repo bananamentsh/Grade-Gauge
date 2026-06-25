@@ -68,6 +68,8 @@ CREATE POLICY "classes_select_members" ON classes FOR SELECT TO authenticated
   USING (is_member_of_class(id));
 CREATE POLICY "classes_update_admin" ON classes FOR UPDATE TO authenticated
   USING (is_admin_of_class(id));
+CREATE POLICY "classes_delete_admin" ON classes FOR DELETE TO authenticated
+  USING (is_admin_of_class(id));
 
 CREATE OR REPLACE FUNCTION create_class(
   p_id text,
@@ -238,3 +240,21 @@ CREATE POLICY "attachments_delete_own_or_admin" ON storage.objects FOR DELETE TO
       owner = auth.uid() OR is_admin_of_class((storage.foldername(name))[1])
     )
   );
+
+-- ============================================================
+-- Account self-deletion. SECURITY DEFINER so an ordinary authenticated
+-- user can remove their own auth.users row (which they have no direct
+-- privilege over); profile, memberships, submissions, and join_requests
+-- all cascade off that delete. Deliberately not granted to anon — it
+-- only ever deletes auth.uid(), so an anonymous caller would just be a
+-- no-op, but destructive functions shouldn't be anon-callable on principle.
+CREATE OR REPLACE FUNCTION delete_own_account()
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth AS $$
+BEGIN
+  DELETE FROM auth.users WHERE id = auth.uid();
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION delete_own_account() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION delete_own_account() TO authenticated;

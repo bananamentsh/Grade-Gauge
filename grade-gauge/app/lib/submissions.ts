@@ -7,6 +7,7 @@ const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hour
 interface SubmissionRow {
   id: string;
   assessment_id: string;
+  user_id: string | null;
   student_name: string;
   anonymous: boolean;
   marker: string;
@@ -30,6 +31,7 @@ async function mapSubmission(supabase: SupabaseClient, row: SubmissionRow): Prom
 
   return {
     id: row.id,
+    userId: row.user_id,
     studentName: row.student_name,
     anonymous: row.anonymous,
     marker: row.marker,

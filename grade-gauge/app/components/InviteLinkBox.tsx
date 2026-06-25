@@ -34,20 +34,20 @@ export default function InviteLinkBox({
 
   return (
     <div>
-      <p className="truncate rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-600">
+      <p className="truncate rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 px-2 py-1.5 text-xs text-gray-600 dark:text-gray-400">
         {url}
       </p>
       <div className="mt-2 flex gap-2">
         <button
           onClick={handleCopy}
-          className="rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+          className="rounded-md border border-gray-300 dark:border-gray-600 px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           {copied ? "Copied!" : "Copy link"}
         </button>
         <button
           onClick={handleRegenerate}
           disabled={pending}
-          className="rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-60"
+          className="rounded-md border border-gray-300 dark:border-gray-600 px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-60"
         >
           {pending ? "..." : "New link"}
         </button>

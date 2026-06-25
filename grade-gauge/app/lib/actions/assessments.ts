@@ -5,9 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "../supabase/server";
 import { getMembershipRole } from "../profile";
-import { Grade, GradeBand } from "../types";
-
-const GRADES: Grade[] = ["A", "B", "C", "D", "E", "0"];
+import { GradeBand } from "../types";
 
 function slugify(name: string): string {
   return (
@@ -22,12 +20,18 @@ function slugify(name: string): string {
 }
 
 function parseGradingScale(formData: FormData): GradeBand[] | null {
+  const names = formData.getAll("gradeName") as string[];
+  const mins = formData.getAll("gradeMin") as string[];
+  const maxs = formData.getAll("gradeMax") as string[];
+  const descs = formData.getAll("gradeDesc") as string[];
+
   const bands: GradeBand[] = [];
 
-  for (const grade of GRADES) {
-    const minRaw = (formData.get(`grade_${grade}_min`) as string)?.trim();
-    const maxRaw = (formData.get(`grade_${grade}_max`) as string)?.trim();
-    if (!minRaw || !maxRaw) continue;
+  for (let i = 0; i < names.length; i++) {
+    const grade = names[i]?.trim();
+    const minRaw = mins[i]?.trim();
+    const maxRaw = maxs[i]?.trim();
+    if (!grade || !minRaw || !maxRaw) continue;
 
     const min = Number(minRaw);
     const max = Number(maxRaw);
@@ -37,7 +41,7 @@ function parseGradingScale(formData: FormData): GradeBand[] | null {
       grade,
       min,
       max,
-      description: ((formData.get(`grade_${grade}_desc`) as string) ?? "").trim(),
+      description: (descs[i] ?? "").trim(),
     });
   }
 

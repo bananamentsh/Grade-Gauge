@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "../supabase/server";
+import { getMembershipRole } from "../profile";
 
 const ACCENTS = ["rose", "sky", "amber", "emerald", "violet", "blue"];
 
@@ -82,4 +83,40 @@ export async function regenerateInviteCode(classId: string, classSlug: string) {
 
   revalidatePath(`/c/${classSlug}`);
   return { error: null };
+}
+
+export interface DeleteClassState {
+  error: string | null;
+}
+
+export async function deleteClass(
+  _prevState: DeleteClassState,
+  formData: FormData
+): Promise<DeleteClassState> {
+  const classId = formData.get("classId") as string;
+
+  if (!classId) {
+    return { error: "Missing class context. Reload the page and try again." };
+  }
+
+  const supabase = await createClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) {
+    return { error: "You need to be signed in to delete a class." };
+  }
+
+  const { isAdmin } = await getMembershipRole(classId);
+  if (!isAdmin) {
+    return { error: "Only the class admin can delete this class." };
+  }
+
+  // Cascades to assessments, submissions, memberships, and join_requests
+  // via ON DELETE CASCADE — see classes_delete_admin policy in policies.sql.
+  const { error } = await supabase.from("classes").delete().eq("id", classId);
+
+  if (error) {
+    return { error: `Failed to delete class: ${error.message}` };
+  }
+
+  redirect("/dashboard");
 }

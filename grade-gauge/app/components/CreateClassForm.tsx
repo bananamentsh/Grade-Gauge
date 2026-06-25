@@ -11,7 +11,7 @@ export default function CreateClassForm() {
   return (
     <form action={formAction} className="mt-6 space-y-4">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Class name
         </label>
         <input
@@ -19,12 +19,12 @@ export default function CreateClassForm() {
           name="name"
           required
           placeholder="Year 10 Maths"
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
+          className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
         />
       </div>
 
       <div>
-        <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Subject
         </label>
         <input
@@ -32,12 +32,12 @@ export default function CreateClassForm() {
           name="subject"
           required
           placeholder="Mathematics"
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
+          className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
         />
       </div>
 
       <div>
-        <label htmlFor="code" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="code" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Class code
         </label>
         <input
@@ -45,15 +45,15 @@ export default function CreateClassForm() {
           name="code"
           required
           placeholder="10MAT3"
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
+          className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
         />
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
           Your school/timetable code for the class. Shown on the class page.
         </p>
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Description (optional)
         </label>
         <textarea
@@ -61,7 +61,7 @@ export default function CreateClassForm() {
           name="description"
           rows={3}
           placeholder="What this page is for, ground rules, etc."
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
+          className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
         />
       </div>
 

@@ -1,4 +1,6 @@
-export type Grade = "A" | "B" | "C" | "D" | "E" | "0";
+// Grade labels are free text, set by whoever creates the assessment
+// (e.g. "A", "B", "Pass", "Fail") so they're just strings, not a fixed enum.
+export type Grade = string;
 
 export interface GradeBand {
   grade: Grade;
@@ -41,6 +43,7 @@ export interface Assessment {
 
 export interface Submission {
   id: string;
+  userId?: string | null;
   studentName: string;
   anonymous: boolean;
   marker: string;

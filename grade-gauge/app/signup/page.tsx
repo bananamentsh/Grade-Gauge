@@ -10,8 +10,8 @@ export default async function SignupPage({
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-56px)] max-w-sm flex-col justify-center px-4 py-10">
-      <h1 className="text-xl font-semibold text-gray-900">Create an account</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Create an account</h1>
+      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
         Sign up to join a class page or create your own.
       </p>
 
@@ -21,7 +21,7 @@ export default async function SignupPage({
 
       <form action={signup} className="mt-6 space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Email
           </label>
           <input
@@ -30,11 +30,11 @@ export default async function SignupPage({
             type="email"
             required
             autoComplete="email"
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Password
           </label>
           <input
@@ -44,11 +44,11 @@ export default async function SignupPage({
             required
             minLength={6}
             autoComplete="new-password"
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
           />
         </div>
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Confirm password
           </label>
           <input
@@ -58,7 +58,7 @@ export default async function SignupPage({
             required
             minLength={6}
             autoComplete="new-password"
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
           />
         </div>
         <button
@@ -69,7 +69,7 @@ export default async function SignupPage({
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-gray-500">
+      <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
         Already have an account?{" "}
         <Link href="/login" className="font-medium text-teal-600 hover:text-teal-700">
           Log in

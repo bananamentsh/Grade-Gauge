@@ -4,10 +4,10 @@ import ScoreDistribution from "./ScoreDistribution";
 
 function StatTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-lg bg-gray-50 px-3 py-2.5">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</p>
-      <p className="mt-0.5 text-lg font-semibold text-gray-900">{value}</p>
-      {sub && <p className="text-xs text-gray-400">{sub}</p>}
+    <div className="rounded-lg bg-gray-50 dark:bg-gray-700 px-3 py-2.5">
+      <p className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">{label}</p>
+      <p className="mt-0.5 text-lg font-semibold text-gray-900 dark:text-gray-100">{value}</p>
+      {sub && <p className="text-xs text-gray-400 dark:text-gray-500">{sub}</p>}
     </div>
   );
 }
@@ -20,8 +20,8 @@ export default function StatsSummary({
   stats: AssessmentStats;
 }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400">
+    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 sm:p-5">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
         Class statistics
       </h2>
 
@@ -35,7 +35,7 @@ export default function StatsSummary({
       </div>
 
       <div className="mt-5">
-        <h3 className="text-xs font-medium uppercase tracking-wide text-gray-400">
+        <h3 className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
           Score distribution
         </h3>
         <div className="mt-2">
@@ -45,13 +45,13 @@ export default function StatsSummary({
 
       {stats.markerBreakdown.length > 1 && (
         <div className="mt-5">
-          <h3 className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <h3 className="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
             Per-marker breakdown
           </h3>
           <div className="mt-2 overflow-x-auto">
             <table className="w-full min-w-[420px] text-left text-sm">
               <thead>
-                <tr className="text-xs uppercase tracking-wide text-gray-400">
+                <tr className="text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
                   <th className="py-1 pr-4 font-medium">Marker</th>
                   <th className="py-1 pr-4 font-medium">Submissions</th>
                   <th className="py-1 pr-4 font-medium">Mean</th>
@@ -63,12 +63,12 @@ export default function StatsSummary({
               <tbody className="divide-y divide-gray-100">
                 {stats.markerBreakdown.map((m) => (
                   <tr key={m.marker}>
-                    <td className="py-1.5 pr-4 font-medium text-gray-700">{m.marker}</td>
-                    <td className="py-1.5 pr-4 text-gray-600">{m.count}</td>
-                    <td className="py-1.5 pr-4 text-gray-600">{m.mean.toFixed(1)}</td>
-                    <td className="py-1.5 pr-4 text-gray-600">{m.median.toFixed(1)}</td>
-                    <td className="py-1.5 pr-4 text-gray-600">{m.stdDev.toFixed(1)}</td>
-                    <td className="py-1.5 pr-4 text-gray-600">{m.iqr.toFixed(1)}</td>
+                    <td className="py-1.5 pr-4 font-medium text-gray-700 dark:text-gray-300">{m.marker}</td>
+                    <td className="py-1.5 pr-4 text-gray-600 dark:text-gray-400">{m.count}</td>
+                    <td className="py-1.5 pr-4 text-gray-600 dark:text-gray-400">{m.mean.toFixed(1)}</td>
+                    <td className="py-1.5 pr-4 text-gray-600 dark:text-gray-400">{m.median.toFixed(1)}</td>
+                    <td className="py-1.5 pr-4 text-gray-600 dark:text-gray-400">{m.stdDev.toFixed(1)}</td>
+                    <td className="py-1.5 pr-4 text-gray-600 dark:text-gray-400">{m.iqr.toFixed(1)}</td>
                   </tr>
                 ))}
               </tbody>

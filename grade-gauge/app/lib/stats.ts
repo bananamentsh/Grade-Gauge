@@ -1,4 +1,4 @@
-import { GradeBand, Submission } from "./types";
+import { Assessment, GradeBand, Submission } from "./types";
 
 export function mean(values: number[]): number {
   if (values.length === 0) return 0;
@@ -192,5 +192,80 @@ export function getAssessmentStats(
         ? getGradeDistribution(submissions, gradingScale)
         : getScoreDistribution(submissions, markedOutOf, passThreshold),
     markerBreakdown: getMarkerBreakdown(submissions),
+  };
+}
+
+export interface CourseGradeBoundary {
+  grade: string;
+  minPct: number;
+}
+
+export interface MemberCourseStats {
+  weightedPct: number | null;
+  gradedCount: number;
+  totalCount: number;
+  boundaries: CourseGradeBoundary[];
+}
+
+/**
+ * Parses a weighting string like "20%" or "20" into a number. Falls back
+ * to 1 (equal weight) when the field is blank or unparseable, so assessments
+ * without an explicit weighting still count toward the running grade.
+ */
+function parseWeight(weighting: string): number {
+  const match = weighting?.match(/[\d.]+/);
+  if (!match) return 1;
+  const n = Number(match[0]);
+  return Number.isFinite(n) && n > 0 ? n : 1;
+}
+
+/**
+ * Computes a member's running weighted-average grade across every assessment
+ * in a class they've submitted to, plus the mark boundaries (as percentages)
+ * needed to hit each letter grade — taken from the most recently created
+ * assessment that defines a letter-grade scale, since that's the scale most
+ * likely to reflect the course's current grading scheme.
+ */
+export function getMemberCourseStats(
+  assessments: Assessment[],
+  submissionsByAssessment: Submission[][],
+  userId: string
+): MemberCourseStats {
+  let weightedSum = 0;
+  let weightTotal = 0;
+  let gradedCount = 0;
+  let latestScaleAssessment: Assessment | undefined;
+
+  assessments.forEach((assessment, index) => {
+    const subs = submissionsByAssessment[index] ?? [];
+    const mine = subs.find((s) => s.userId === userId);
+
+    if (mine && assessment.markedOutOf > 0) {
+      const pct = (mine.score / assessment.markedOutOf) * 100;
+      const weight = parseWeight(assessment.weighting);
+      weightedSum += pct * weight;
+      weightTotal += weight;
+      gradedCount += 1;
+    }
+
+    if (assessment.usesLetterGrades && assessment.gradingScale && assessment.gradingScale.length > 0) {
+      latestScaleAssessment = assessment;
+    }
+  });
+
+  const boundaries: CourseGradeBoundary[] = latestScaleAssessment
+    ? [...latestScaleAssessment.gradingScale!]
+        .sort((a, b) => b.min - a.min)
+        .map((band) => ({
+          grade: band.grade,
+          minPct: (band.min / latestScaleAssessment!.markedOutOf) * 100,
+        }))
+    : [];
+
+  return {
+    weightedPct: weightTotal > 0 ? weightedSum / weightTotal : null,
+    gradedCount,
+    totalCount: assessments.length,
+    boundaries,
   };
 }

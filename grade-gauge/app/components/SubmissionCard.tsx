@@ -25,10 +25,10 @@ export default function SubmissionCard({
   const displayName = submission.anonymous ? "Anonymous" : submission.studentName;
 
   return (
-    <div className="flex gap-3 rounded-lg border border-gray-200 bg-white p-4">
+    <div className="flex gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
       <span
         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-          submission.anonymous ? "bg-gray-200 text-gray-500" : "bg-teal-100 text-teal-700"
+          submission.anonymous ? "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400" : "bg-teal-100 text-teal-700"
         }`}
       >
         {submission.anonymous ? "?" : initials(displayName)}
@@ -36,22 +36,22 @@ export default function SubmissionCard({
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-          <span className="font-semibold text-gray-900">{displayName}</span>
-          <span className="text-gray-400">&middot;</span>
-          <span className="text-gray-500">Marked by {submission.marker}</span>
-          <span className="text-gray-400">&middot;</span>
-          <span className="text-gray-400">{formatDate(submission.submittedAt)}</span>
+          <span className="font-semibold text-gray-900 dark:text-gray-100">{displayName}</span>
+          <span className="text-gray-400 dark:text-gray-500">&middot;</span>
+          <span className="text-gray-500 dark:text-gray-400">Marked by {submission.marker}</span>
+          <span className="text-gray-400 dark:text-gray-500">&middot;</span>
+          <span className="text-gray-400 dark:text-gray-500">{formatDate(submission.submittedAt)}</span>
         </div>
 
         {submission.responseExcerpt && (
-          <blockquote className="mt-2 border-l-2 border-gray-200 pl-3 text-sm text-gray-600">
+          <blockquote className="mt-2 border-l-2 border-gray-200 dark:border-gray-700 pl-3 text-sm text-gray-600 dark:text-gray-400">
             {submission.responseExcerpt}
           </blockquote>
         )}
 
         {submission.feedback && (
-          <p className="mt-2 text-sm text-gray-500">
-            <span className="font-medium text-gray-600">Feedback: </span>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <span className="font-medium text-gray-600 dark:text-gray-400">Feedback: </span>
             {submission.feedback}
           </p>
         )}
@@ -69,7 +69,7 @@ export default function SubmissionCard({
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-1.5">
-        <span className="rounded-md bg-gray-100 px-2 py-1 text-sm font-semibold text-gray-700">
+        <span className="rounded-md bg-gray-100 dark:bg-gray-800 px-2 py-1 text-sm font-semibold text-gray-700 dark:text-gray-300">
           {submission.score}/{assessment.markedOutOf}
         </span>
         {submission.grade && <GradeBadge grade={submission.grade} />}

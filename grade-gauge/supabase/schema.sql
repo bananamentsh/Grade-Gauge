@@ -50,7 +50,9 @@ CREATE TABLE IF NOT EXISTS submissions (
   anonymous         BOOLEAN NOT NULL DEFAULT FALSE,
   marker            TEXT NOT NULL,
   score             INTEGER NOT NULL,
-  grade             TEXT CHECK (grade IN ('A', 'B', 'C', 'D', 'E', '0')),
+  -- No CHECK constraint: grade names are admin-defined per assessment
+  -- (see grading_scale on assessments), not a fixed A-F/0 set.
+  grade             TEXT,
   feedback          TEXT,
   response_excerpt  TEXT,
   -- Author of the submission. Nullable so rows survive account
@@ -62,6 +64,10 @@ CREATE TABLE IF NOT EXISTS submissions (
   file_name         TEXT,
   submitted_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Re-run safety: drop the old fixed A-F/0 CHECK for databases created
+-- before custom grade names existed.
+ALTER TABLE submissions DROP CONSTRAINT IF EXISTS submissions_grade_check;
 
 -- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_assessments_class_id  ON assessments(class_id);
