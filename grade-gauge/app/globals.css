@@ -16,8 +16,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Background/text color for <body> are set via Tailwind classes
+   (bg-gray-100 dark:bg-gray-950, etc.) in layout.tsx instead of here.
+   A plain, un-layered rule like the old `body { background: ... }`
+   always wins over Tailwind's layered utility classes regardless of
+   specificity, which silently broke dark mode on the page background. */
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
